@@ -1,4 +1,4 @@
-name: churn-imbalanced-dataset
+name: churn-imbalanced-dataset-dvc
 on: [push]
 permissions: write-all
 jobs:
@@ -17,10 +17,13 @@ jobs:
 
       - name: Prepare Environment
         run: |
-          # Your ML workflow goes here
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          python script.py
+           # Your ML workflow goes here
+           python -m pip install --upgrade pip
+           pip install -r requirements.txt
+           dvc pull
+           python script.py
+           dvc add ./data/
+           dvc push 
 
       - name: Generate Report
         env:
