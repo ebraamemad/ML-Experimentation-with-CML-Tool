@@ -1,4 +1,4 @@
-name: churn-imbalanced-dataset-dvc
+name: dvc-pipe
 on: [push]
 permissions: write-all
 jobs:
@@ -9,33 +9,30 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - uses: actions/setup-python@v3
+      - uses: iterative/setup-dvc@v1
+      - uses: iterative/setup-cml@v1
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      - uses: iterative/setup-cml@v1
-
-
-      - name: Prepare Environment
+      
+      - name: Env
         run: |
-           # Your ML workflow goes here
-           python -m pip install --upgrade pip
-           pip install -r requirements.txt
-           dvc pull
-           python script.py
-           dvc add ./data/
-           dvc push 
-
-      - name: Generate Report
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Report
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+        
+          # Post reports as comments in GitHub PRs
+          dvc repro
+          git fetch --prune
 
-          # Get the report
-          echo "## Metrics" > report.md
-          # cat metrics.txt >> report.md
-          
-          awk 'NR%4{print "    " $0}{print ""}' metrics.txt >> report.md
+          echo "## Metrics" >> report.md
+          dvc metrics diff --md main >> report.md
 
           echo "## Confusion Matrix" >> report.md
           echo "![](./conf_matrix.png)" >> report.md
+          
           cml comment create report.md
